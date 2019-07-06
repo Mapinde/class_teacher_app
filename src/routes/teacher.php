@@ -51,3 +51,29 @@ $app->post('/api/teacher/class/add/{id}', function (Request $request, Response $
     }
      
 });
+
+//Edit the class name of a class I am class teacher of
+$app->put('/api/teacher/class/edit', function (Request $request, Response $response, array $args) {
+    $teacherId = $request->getAttribute('id');
+    $classId = $request->getParam('id');
+    $className = $request->getParam('name');
+    
+    $sql = "UPDATE classes SET name = :className WHERE id = $classId";
+    try{
+        //Get Db Object
+        $db = new dbConnetion();
+        //Connect
+        $db = $db->connect();
+        
+        $stmt = $db->prepare($sql);
+
+        $stmt->bindParam(':className', $className);
+        $stmt->execute();
+       
+        return '{"message":"class edited successful"}';
+    }catch(PDOException $e){
+
+        return '{"message":'.$e->getMessage(). '}';
+    }
+     
+});
