@@ -230,4 +230,31 @@ $app->put('/api/student/score/add/{id}', function (Request $request, Response $r
      
 });
 
+//Calculate the total score and average score for each student
+$app->get('/api/student/score', function (Request $request, Response $response, array $args) {
+    
+    $sql ="SELECT student_id, name,  sum(score) as total, avg(score) as average FROM student_Subject ss "
+    ."INNER JOIN students st on st.id = ss.student_id group by student_id, name";
+    
+    try{
+        //Get Db Object
+        $db = new dbConnetion();
+        //Connect
+        $db = $db->connect();
+        
+        $stmt = $db->query($sql);
+        $student = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $db = null;
+        
+        return json_encode($student);
+    }catch(PDOException $e){
+
+        return '{"message":'.$e->getMessage(). '}';
+    }
+    
+});
+
+
+
+
 

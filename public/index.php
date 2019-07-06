@@ -19,4 +19,7 @@ require 'src/routes/teacher.php';
 // Student Routes
 require 'src/routes/student.php';
 
+// Class Routes
+require 'src/routes/class.php';
+
 $app->run();
