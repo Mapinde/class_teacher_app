@@ -35,7 +35,7 @@ $app->post('/api/student/class/add/{id}', function (Request $request, Response $
     $last_name = $request->getParam('last_name');
     $age = $request->getParam('age');
     
-    $sql = "INSERT INTO students (first_name, last_name, age) VALUES(:first_name, :last_name, :age)";
+    $sql = "INSERT INTO students (first_name, last_name, age, class_id) VALUES(:first_name, :last_name, :age, :id)";
     try{
         //Get Db Object
         $db = new dbConnetion();
@@ -47,6 +47,7 @@ $app->post('/api/student/class/add/{id}', function (Request $request, Response $
         $stmt->bindParam(':first_name', $first_name);
         $stmt->bindParam(':last_name', $last_name);
         $stmt->bindParam(':age', $age);
+        $stmt->bindParam(':id', $id);
         $stmt->execute();
        
         return '{"message":"Student added successful"}';
