@@ -31,11 +31,10 @@ $app->get('/api/student/class/{id}', function (Request $request, Response $respo
 // Add a new student to a new class
 $app->post('/api/student/class/add/{id}', function (Request $request, Response $response, array $args) {
     $id = $request->getAttribute('id');
-    $first_name = $request->getParam('first_name');
-    $last_name = $request->getParam('last_name');
+    $name = $request->getParam('name');
     $age = $request->getParam('age');
     
-    $sql = "INSERT INTO students (first_name, last_name, age) VALUES(:first_name, :last_name, :age)";
+    $sql = "INSERT INTO students (name, age) VALUES(:name, :age)";
     try{
         //Get Db Object
         $db = new dbConnetion();
@@ -44,8 +43,7 @@ $app->post('/api/student/class/add/{id}', function (Request $request, Response $
         
         $stmt = $db->prepare($sql);
 
-        $stmt->bindParam(':first_name', $first_name);
-        $stmt->bindParam(':last_name', $last_name);
+        $stmt->bindParam(':name', $name);
         $stmt->bindParam(':age', $age);
         $stmt->execute();
        
@@ -60,11 +58,10 @@ $app->post('/api/student/class/add/{id}', function (Request $request, Response $
 // Edit a student’s details like Name and Age
 $app->put('/api/student/edit/{id}', function (Request $request, Response $response, array $args) {
     $studentId = $request->getAttribute('id');
-    $first_name = $request->getParam('first_name');
-    $last_name = $request->getParam('last_name');
+    $name = $request->getParam('name');
     $age = $request->getParam('age');
     
-    $sql = "UPDATE students SET first_name = :first_name, last_name = :last_name, age = :age WHERE id = $studentId";
+    $sql = "UPDATE students SET name = :name, age = :age WHERE id = $studentId";
     try{
         //Get Db Object
         $db = new dbConnetion();
@@ -73,8 +70,7 @@ $app->put('/api/student/edit/{id}', function (Request $request, Response $respon
         
         $stmt = $db->prepare($sql);
 
-        $stmt->bindParam(':first_name', $first_name);
-        $stmt->bindParam(':last_name', $last_name);
+        $stmt->bindParam(':name', $name);
         $stmt->bindParam(':age', $age);
         $stmt->execute();
        
@@ -89,9 +85,9 @@ $app->put('/api/student/edit/{id}', function (Request $request, Response $respon
 // View the subjects that each student is taking, like Maths and English
 $app->get('/api/student/subjects', function (Request $request, Response $response, array $args) {
     
-    $sql ="select st. first_name, st.last_name, s.name  from students st "
-    . "inner join student_Subject ss on st.id = ss.student_id "
-    . "inner join subjects s on s.id = ss.subject_id";
+    $sql ="SELECT st.name, s.name FROM students st "
+    . "INNER JOIN student_Subject ss on st.id = ss.student_id "
+    . "INNER JOIN subjects s on s.id = ss.subject_id";
     try{
         //Get Db Object
         $db = new dbConnetion();
@@ -105,7 +101,7 @@ $app->get('/api/student/subjects', function (Request $request, Response $respons
         return json_encode($students);
     }catch(PDOException $e){
 
-        return json_encode($e->getMessage());
+        return '{"message":'.$e->getMessage(). '}';
     }
     
     
@@ -133,7 +129,103 @@ $app->post('/api/student/subject/assign/{id}', function (Request $request, Respo
         return '{"message":"Student assign successful"}';
     }catch(PDOException $e){
 
-        return json_encode($e->getMessage());
+        return '{"message":'.$e->getMessage(). '}';
+    }
+     
+});
+
+// Filter the list of students by the subjects they are taking
+$app->get('/api/students/subject/{id}', function (Request $request, Response $response, array $args) {
+    $id = $request->getAttribute('id');
+    $sql ="SELECT st.name, s.name FROM students st "
+    . "INNER JOIN student_Subject ss on st.id = ss.student_id "
+    . "INNER JOIN subjects s on s.id = ss.subject_id WHERE s.id = $id";
+    try{
+        //Get Db Object
+        $db = new dbConnetion();
+        //Connect
+        $db = $db->connect();
+        
+        $stmt = $db->query($sql);
+        $students = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $db = null;
+        
+        return json_encode($students);
+    }catch(PDOException $e){
+
+        return '{"message":'.$e->getMessage(). '}';
+    }
+    
+});
+
+//Search for a particular student by Name or Age
+$app->get('/api/student/name/{name}', function (Request $request, Response $response, array $args) {
+    $name = $request->getAttribute('name');
+    $sql ="SELECT * FROM students WHERE name like '%$name%'";
+    
+    try{
+        //Get Db Object
+        $db = new dbConnetion();
+        //Connect
+        $db = $db->connect();
+        
+        $stmt = $db->query($sql);
+        $student = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $db = null;
+        
+        return json_encode($student);
+    }catch(PDOException $e){
+
+        return '{"message":'.$e->getMessage(). '}';
+    }
+    
+});
+
+//Search for a particular student by Name or Age
+$app->get('/api/student/age/{age}', function (Request $request, Response $response, array $args) {
+    $age = $request->getAttribute('age');
+    $sql ="SELECT * FROM students WHERE age = $age";
+    
+    try{
+        //Get Db Object
+        $db = new dbConnetion();
+        //Connect
+        $db = $db->connect();
+        
+        $stmt = $db->query($sql);
+        $student = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $db = null;
+        
+        return json_encode($student);
+    }catch(PDOException $e){
+
+        return '{"message":'.$e->getMessage(). '}';
+    }
+    
+});
+
+//Set the score/marks that each student obtained for each subject
+$app->put('/api/student/score/add/{id}', function (Request $request, Response $response, array $args) {
+    $studentId = $request->getAttribute('id');
+    $score = $request->getParam('score');
+    $subjectId = $request->getParam('subjectid');
+    
+    $sql = "UPDATE student_Subject SET score = :score WHERE student_id = $studentId AND subject_id = $subjectId ";
+    try{
+        //Get Db Object
+        $db = new dbConnetion();
+        //Connect
+        $db = $db->connect();
+        
+        $stmt = $db->prepare($sql);
+
+        $stmt->bindParam(':score', $score);
+        $stmt->execute();
+       
+        return '{"message":"Score added successful"}';
+    }catch(PDOException $e){
+
+        return '{"message":'.$e->getMessage(). '}';
     }
      
 });
